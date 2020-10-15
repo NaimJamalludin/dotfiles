@@ -1,0 +1,312 @@
+* Setup
+
+** Configure package sources
+
+Add repositories from which we'll load packages. I prefer to live on the bleeding edge so
+have only enabled melpa. Setting =package-enable-at-startup= to =nil= prevents a second
+package load and slightly improves startup time.
+
+#+BEGIN_SRC emacs-lisp
+  (setq package-enable-at-startup nil)
+  (setq package-archives '(("gnu" . "http://mirrors.163.com/elpa/gnu/")
+			   ("melpa" . "https://melpa.org/packages/")
+			   ("org" . "http://orgmode.org/elpa/")))
+#+END_SRC
+
+** Bootstrap use-package
+
+If =use-package= is not installed, install it.
+
+#+BEGIN_SRC emacs-lisp
+  (unless (package-installed-p 'use-package)
+    (package-refresh-contents)
+    (package-install 'use-package)
+    (eval-when-compile (require 'use-package)))
+#+END_SRC
+
+By default all packages should be installed from package manager as
+that's the usual path. This is equivalent to setting =:ensure t= on
+each call to =use-package=. To disable set =:ensure nil= (this is done
+automatically for any packages using =:load-path= so shouldn't
+generally be needed).
+
+#+BEGIN_SRC emacs-lisp
+  (setq use-package-always-ensure t)
+#+END_SRC
+
+** Increase garbage collector threshold
+
+The default garbage collection threshold is 800kB, increasing this to
+10MB for startup increases speed (from 11.0s -> 9.7s when I tested).
+
+#+BEGIN_SRC emacs-lisp
+  (setq gc-cons-threshold 10000000)
+
+  ;; Restore after startup
+  (add-hook 'after-init-hook
+
+	    (lambda ()
+	      (setq gc-cons-threshold 1000000)
+	      (message "gc-cons-threshold restored to %S"
+		       gc-cons-threshold)))
+#+END_SRC
+
+** Configuration file hotkeys
+
+Since we are always going to make changes on the emacs config file, it is so much easier
+to implement keybinds for it
+
+#+BEGIN_SRC emacs-lisp
+  (defun find-config ()
+    "Edit config.org"
+    (interactive)
+    (find-file "~/dotfiles/config.org"))
+
+  (global-set-key (kbd "C-c I") 'find-config)
+#+END_SRC
+
+
+* Preferences
+
+** Remove splash screen on startup
+
+#+BEGIN_SRC emacs-lisp
+  (setq inhibit-startup-screen t)
+#+END_SRC
+
+** Shorter yes or no prompt
+
+Make the =yes or no= prompts shorter.
+
+#+BEGIN_SRC emacs-lisp
+  (defalias 'yes-or-no-p 'y-or-n-p)
+#+END_SRC
+
+** Auto new line when typing
+
+#+BEGIN_SRC emacs-lisp
+  (setq-default auto-fill-function 'do-auto-fill)
+#+END_SRC
+
+** Line number
+
+#+begin_src emacs-lisp
+	(global-display-line-numbers-mode)
+#+end_src
+
+** Fill column
+
+#+begin_src emacs-lisp
+   	(setq-default fill-column 90)
+#+end_src
+
+** Indentations
+
+#+begin_src emacs-lisp
+	(setq-default
+		indent-tabs-mode t
+  		tab-stop-list (number-sequence 4 200 4)
+		tab-width 4
+		indent-line-function 'insert-tab)
+#+end_src
+
+** Scroll
+
+#+begin_src emacs-lisp
+	(setq scroll-conservatively 101)
+	(setq scroll-margin 20)
+#+end_src
+
+** Line Highlight
+
+#+begin_src emacs-lisp
+	(global-hl-line-mode t)
+#+end_src
+
+** Functions
+
+#+begin_src emacs-lisp
+	(which-function-mode 1)
+#+end_src
+
+** Selection
+
+#+begin_src emacs-lisp
+	(delete-selection-mode 1)
+#+end_src
+
+** Parenthesis
+
+#+begin_src emacs-lisp
+(show-paren-mode 1)
+#+end_src
+
+
+* Packages
+
+** Theme
+
+   #+BEGIN_SRC emacs-lisp
+(use-package doom-themes
+  :config
+  ;; Global settings (defaults)
+  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+        doom-themes-enable-italic t) ; if nil, italics is universally disabled
+  (load-theme 'doom-one t)
+
+  ;; Corrects (and improves) org-mode's native fontification.
+  (doom-themes-org-config))
+   #+END_SRC
+
+
+#+begin_src emacs-lisp
+(use-package doom-modeline
+  :hook (after-init . doom-modeline-mode))
+#+end_src
+
+#+begin_src emacs-lisp
+(use-package all-the-icons)
+#+end_src
+
+
+#+begin_src emacs-lisp
+;; How tall the mode-line should be. It's only respected in GUI.
+;; If the actual char height is larger, it respects the actual height.
+(setq doom-modeline-height 25)
+
+;; How wide the mode-line bar should be. It's only respected in GUI.
+(setq doom-modeline-bar-width 3)
+
+;; The limit of the window width.
+;; If `window-width' is smaller than the limit, some information won't be displayed.
+(setq doom-modeline-window-width-limit fill-column)
+
+;; Whether display the colorful icon for `major-mode'.
+;; It respects `all-the-icons-color-icons'.
+(setq doom-modeline-major-mode-color-icon t)
+
+#+end_src
+
+** Command completion
+
+   =ivy= is a generic completion framework which uses the
+   minibuffer. Turning on =ivy-mode= enables replacement of lots of built
+   in =ido= functionality.
+
+   #+BEGIN_SRC emacs-lisp
+  (use-package ivy
+      :config
+      (ivy-mode t))
+      
+  (setq ivy-use-virtual-buffers t)
+  (setq ivy-count-format "(%d/%d) ")
+
+   #+END_SRC
+
+#+begin_src emacs-lisp
+(use-package ivy-posframe
+  :ensure t
+  :after ivy
+  :diminish ivy-posframe-mode
+  :custom-face
+  (ivy-posframe ((t (list :background (face-attribute 'default :background)))))
+  (ivy-posframe-border ((t (:background "gold"))))
+  (ivy-posframe-cursor ((t (:background "gold"))))
+  :config
+  (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display)))
+  (ivy-posframe-mode 1))
+
+#+end_src
+
+** Suggest next key
+
+   Suggest next keys to me based on currently entered key combination.
+
+   #+BEGIN_SRC emacs-lisp
+  (use-package which-key
+    :config
+    (add-hook 'after-init-hook 'which-key-mode))
+   #+END_SRC
+
+** Easier selection
+
+   =expand-region= expands the region around the cursor semantically depending on mode. Hard to describe but a killer feature.
+
+   #+BEGIN_SRC emacs-lisp
+  (use-package expand-region
+    :bind ("C-=" . er/expand-region))
+   #+END_SRC
+
+** Git
+
+   Magit is an awesome interface to git. Summon it with `C-x g`.
+
+   #+BEGIN_SRC emacs-lisp
+  (use-package magit
+    :bind ("C-x g" . magit-status))
+   #+END_SRC
+
+** Org-mode
+   #+BEGIN_SRC emacs-lisp
+(setq org-log-done 'note)
+(setq org-support-shift-select t)
+   #+END_SRC
+
+   #+BEGIN_SRC emacs-lisp
+
+(use-package org-bullets
+ :config
+  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+
+   #+END_SRC
+
+** Dashboard
+   #+BEGIN_SRC emacs-lisp
+
+ (use-package dashboard
+   :init
+     (progn
+       (setq dashboard-items '((recents . 5)))
+       (setq dashboard-show-shortcuts nil)
+	 (setq dashboard-center-content nil)
+	 ;; (setq dashboard-banner-logo-title "Follow and Tip. Like and Subscribe")
+	 (setq dashboard-set-file-icons t)
+	 (setq dashboard-set-heading-icons t)
+	 ;; (setq dashboard-startup-banner "~/Downloads/me.png")
+	 (setq dashboard-set-navigator nil)
+	 ;; Format: "(icon title help action face prefix suffix)"
+	 (setq dashboard-navigator-buttons
+         `(;; line1
+         ((,nil
+           "init file"
+           "Open init file"
+	     (lambda (&rest _) (find-file "~/.dotfiles/config.org"))
+	   )))))
+   :config
+   (dashboard-setup-startup-hook))
+
+   #+END_SRC
+
+** Company Mode
+
+#+begin_src emacs-lisp
+
+	(use-package company
+		:init
+		(add-hook 'after-init-hook 'global-company-mode)
+		:custom
+	    (company-tooltip-limit 5) ; show 5 candidates at one time
+		(company-idle-delay 0.15) ;; delay (in seconds) when candidates are shown, change if you need to, potentially cpu intensive on older machines if set to 0
+		(company-minimum-prefix-length 3) ;; show completions after 3 chars
+		(company-selection-wrap-around t) ;; goes to start of selection if you reached the bottom 
+		(company-require-match 'never)) ;; dont need to pick a choice )
+#+end_src
+
+** Flycheck
+
+#+begin_src emacs-lisp
+
+	(use-package flycheck
+		:init
+		(global-flycheck-mode))
+#+end_src
