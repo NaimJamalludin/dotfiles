@@ -1,6 +1,6 @@
 * Setup
 
-Setup are settings that are essential for this configuration file. 
+Setup are settings that are essential for this configuration file.
 
 ** Package Sources
 
@@ -105,6 +105,12 @@ Use the default length before starting the new line
   (setq-default fill-column 80)
 #+end_src
 
+Add a new line before the end of the files
+
+#+begin_src emacs-lisp
+  (setq require-final-newline t)
+#+end_src
+
 
 ** Line number
 
@@ -118,11 +124,9 @@ Turn on line numbering on the left
 ** Indentations
 
 #+begin_src emacs-lisp
-  (setq-default
-    indent-tabs-mode t
-  	tab-stop-list (number-sequence 4 200 4)
-	tab-width 4
-	indent-line-function 'insert-tab)
+  (setq-default indent-tabs-mode nil)
+  (setq-default tab-width 4)
+  (setq tab-width 4)
 #+end_src
 
 
@@ -131,8 +135,17 @@ Turn on line numbering on the left
 Set smooth scrolling using keyboard movements
 
 #+begin_src emacs-lisp
-	(setq scroll-conservatively 101)
-	(setq scroll-margin 20)
+  (setq scroll-conservatively 101)
+  (setq scroll-margin 20)
+#+end_src
+
+Mouse scroling
+
+#+begin_src emacs-lisp
+  (setq mouse-wheel-scroll-amount '(1 ((shift) . 1))) ;; one line at a time
+  (setq mouse-wheel-progressive-speed nil) ;; don't accelerate scrolling
+  (setq mouse-wheel-follow-mouse 't) ;; scroll window under mouse
+  (setq scroll-step 1))
 #+end_src
 
 
@@ -173,13 +186,53 @@ Highlight parenthesis
 #+end_src
 
 
+** Kill emacs
+
+Prompt for confirmation before killing the emacs
+
+#+begin_src emacs-lisp
+  (setq confirm-kill-emacs 'y-or-n-p)
+#+end_src
+
+
+** Extra path
+
+#+begin_src emacs-lisp
+  (defvar config-load-path (file-name-directory (or load-file-name buffer-file-name)))
+#+end_src
+
+
+** Display inline images
+
+#+begin_src emacs-lisp
+  (setq org-startup-with-inline-images t)
+#+end_src
+
+
+** Whitespace
+
+#+begin_src emacs-lisp
+  (add-hook 'before-save-hook 'delete-trailing-whitespace)
+#+end_src
+
+
+** Display
+
+#+begin_src emacs-lisp
+  (set-frame-parameter (selected-frame) 'alpha '(90 . 90))
+  (add-to-list 'default-frame-alist '(alpha . (90 . 90)))
+  (set-frame-parameter (selected-frame) 'fullscreen 'maximized)
+  (add-to-list 'default-frame-alist '(fullscreen . maximized)))
+#+end_src
+
+
 * Packages
 
 Packages are third party tools that competes my workflow.
 
 ** Theme
 
-My theme preference is =doom-themes=. Bold and italic text are enabled. 
+My theme preference is =doom-themes=. Bold and italic text are enabled.
 
  #+BEGIN_SRC emacs-lisp
   (use-package doom-themes
@@ -237,7 +290,7 @@ Basic configuration for =doom-modeline= including adding the support for
   (use-package ivy
       :config
       (ivy-mode t))
-      
+
   (setq ivy-use-virtual-buffers t)
   (setq ivy-count-format "(%d/%d) ")
 
@@ -362,7 +415,7 @@ Use =company-mode= for text suggestion.
 	(company-tooltip-limit 5) ; show 5 candidates at one time
 	(company-idle-delay 0.15) ;; delay (in seconds) when candidates are shown, change if you need to, potentially cpu intensive on older machines if set to 0
 	(company-minimum-prefix-length 3) ;; show completions after 3 chars
-	(company-selection-wrap-around t) ;; goes to start of selection if you reached the bottom 
+	(company-selection-wrap-around t) ;; goes to start of selection if you reached the bottom
 	(company-require-match 'never)) ;; dont need to pick a choice )
 #+end_src
 
@@ -376,4 +429,57 @@ Enable =flycheck= for spelling mistake
   (use-package flycheck
     :init
 	(global-flycheck-mode))
+#+end_src
+
+** PlantUML
+
+Enable Plant UML mode
+
+#+begin_src emacs-lisp
+  (use-package plantuml-mode)
+#+end_src
+
+Download and hook up Plantuml
+
+#+begin_src emacs-lisp
+  (let ((plantuml-directory (concat config-load-path "extra/"))
+        (plantuml-link "https://superb-dca2.dl.sourceforge.net/project/plantuml/plantuml.jar"))
+    (let ((plantuml-target (concat plantuml-directory "plantuml.jar")))
+      (if (not (f-exists? plantuml-target))
+          (progn (message "Downloading plantuml.jar")
+                (shell-command
+                  (mapconcat 'identity (list "wget" plantuml-link "-O" plantuml-target) " "))
+                (kill-buffer "*Shell Command Output*")))
+       (setq org-plantuml-jar-path plantuml-target)))
+#+end_src
+
+** Org-babel
+
+Setup supported languages
+
+#+begin_src emacs-lisp
+  (org-babel-do-load-languages
+   (quote org-babel-load-languages)
+   (quote ((emacs-lisp . t)
+           (dot . t)
+           (plantuml . t)
+           (python . t)
+           (gnuplot . t)
+           (shell . t)
+           (ledger . t)
+           (org . t)
+           (latex . t)
+           (haskell . t))))
+#+end_src
+
+** Elfeed
+
+#+begin_src emacs-lisp
+  (use-package elfeed
+    :bind ("C-x w" . elfeed))
+
+  (use-package elfeed-org
+    :config
+    (setq rmh-elfeed-org-files (list (concat config-load-path "elfeed.org")))
+    (elfeed-org))
 #+end_src
