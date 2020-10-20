@@ -431,6 +431,7 @@ Enable =flycheck= for spelling mistake
 	(global-flycheck-mode))
 #+end_src
 
+
 ** PlantUML
 
 Enable Plant UML mode
@@ -453,6 +454,7 @@ Download and hook up Plantuml
        (setq org-plantuml-jar-path plantuml-target)))
 #+end_src
 
+
 ** Org-babel
 
 Setup supported languages
@@ -472,6 +474,7 @@ Setup supported languages
            (haskell . t))))
 #+end_src
 
+
 ** Elfeed
 
 #+begin_src emacs-lisp
@@ -482,4 +485,22 @@ Setup supported languages
     :config
     (setq rmh-elfeed-org-files (list (concat config-load-path "elfeed.org")))
     (elfeed-org))
+#+end_src
+
+** Treemacs
+
+Tree navigation
+
+#+begin_src emacs-lisp
+  (use-package treemacs
+    :bind
+    (:map global-map
+          ([f8] . treemacs)))
+#+end_src
+
+Tree nagivation with Magit
+
+#+begin_src emacs-lisp
+  (use-package treemacs-magit
+    :after treemacs magit)
 #+end_src
