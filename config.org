@@ -443,17 +443,7 @@ Enable Plant UML mode
 Download and hook up Plantuml
 
 #+begin_src emacs-lisp
-  (let ((plantuml-directory (concat config-load-path "extra/"))
-        (plantuml-link "https://superb-dca2.dl.sourceforge.net/project/plantuml/plantuml.jar"))
-    (let ((plantuml-target (concat plantuml-directory "plantuml.jar")))
-      (if (not (f-exists? plantuml-target))
-          (progn (message "Downloading plantuml.jar")
-                (shell-command
-                  (mapconcat 'identity (list "wget" plantuml-link "-O" plantuml-target) " "))
-                (kill-buffer "*Shell Command Output*")))
-       (setq org-plantuml-jar-path plantuml-target)))
 #+end_src
-
 
 ** Org-babel
 
